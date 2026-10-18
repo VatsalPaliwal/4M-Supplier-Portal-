@@ -2,8 +2,6 @@
 
 A web portal that lets manufacturing suppliers submit their monthly 4M change declarations, and lets quality administrators review, track and export them. It replaces ad-hoc spreadsheet and email exchanges with a single, structured and authenticated workflow.
 
-> **Status:** working prototype, built to demonstrate the workflow to an IT department ahead of a possible full deployment. Not production-hardened (see [Limitations](#limitations-and-roadmap)).
-
 ## Background
 
 In manufacturing quality management, a supplier must report any change to the **4Ms** that could affect product quality:
