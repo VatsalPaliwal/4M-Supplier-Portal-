@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiant — Supplier Upload</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="{{ url_for('static', path='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Shared Header (logged in state) -->
+<header class="radiant-header d-flex align-items-center justify-content-between">
+  <div class="d-flex align-items-center">
+    <img src="{{ url_for('static', path='images/radiant-logo.png') }}" alt="Radiant" class="radiant-logo-img">
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <a href="/supplier/upload" class="btn btn-danger rounded-pill btn-sm px-3 active-nav-btn">Upload 4M Form</a>
+    <a href="/supplier/history" class="btn btn-navy rounded-pill btn-sm px-3">History</a>
+    <a href="/supplier/change-password" class="logout-link ms-2">Change Password</a>
+    <form method="post" action="/logout" class="d-inline">
+      <button type="submit" class="logout-link border-0 bg-transparent p-0">Logout</button>
+    </form>
+  </div>
+</header>
+
+<div class="container my-4">
+  <div class="card card-panel shadow-sm">
+    <div class="card-body">
+
+      {% if error %}
+      <div class="alert alert-danger py-2 small" role="alert">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <!-- Warning Notice -->
+      <div class="alert alert-warning py-2 small mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> 
+        Please Upload the documents before first week of every month failure to do so will result in score deduction.
+      </div>
+
+      <form method="post" action="/supplier/upload" enctype="multipart/form-data" id="uploadForm">
+
+        <!-- Organisation / Editable Authorized Person identification -->
+        <div class="dense-form mb-3">
+          <div class="form-row mb-2">
+            <label class="form-label-left">Name of the Organisation:</label>
+            <div class="form-input-right">
+              <input type="text" class="form-control form-control-sm" value="{{ supplier.supplier_name }}" readonly>
+            </div>
+          </div>
+          <div class="form-row mb-2">
+            <label class="form-label-left" for="authorized_person_name">Authorized Person Name:</label>
+            <div class="form-input-right">
+              <input type="text" class="form-control form-control-sm" id="authorized_person_name" name="authorized_person_name" value="{{ supplier.authorized_person_name }}" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format Download Banner / Button -->
+        <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded mb-4 border">
+          <div>
+            <h6 class="mb-1 fw-bold text-navy">Need the official report template?</h6>
+            <p class="mb-0 text-muted small">Download the standard format reference file provided by the admin.</p>
+          </div>
+          <a href="/supplier/download-template" class="btn btn-outline-navy btn-sm px-3 rounded-pill fw-semibold">
+            <i class="bi bi-download me-1"></i> Download Format
+          </a>
+        </div>
+
+        <h5 class="text-center fw-bold text-navy mb-3">4M Change Control System</h5>
+
+        <!-- Month / Year -->
+        <div class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <label for="reportMonth" class="form-label fw-semibold">Month:</label>
+            <select id="reportMonth" name="month" class="form-select form-select-sm" required>
+              <option value="">Select</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label for="reportYear" class="form-label fw-semibold">Year:</label>
+            <select id="reportYear" name="year" class="form-select form-select-sm" required>
+              <option value="">Select</option>
+              {% for y in years %}
+              <option value="{{ y }}">{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <p class="declaration-text">
+          I on behalf of M/S <strong>{{ supplier.supplier_name }}</strong> declare below status for 4M changes for the month of
+          <strong id="declarationMonth">___</strong>.
+        </p>
+
+        <div class="dense-form mb-3" id="fourMRows">
+
+          <div class="form-row align-items-center mb-2">
+            <label class="form-label-left fw-bold mb-0">Man</label>
+            <div class="form-input-right d-flex align-items-center gap-2">
+              <select name="man_change" class="form-select form-select-sm w-auto fourm-select" data-target="man">
+                <option value="">Select</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+              <input type="file" name="man_change_pdf" accept=".pdf" class="form-control form-control-sm d-none fourm-file" id="man-file" style="max-width:280px;">
+            </div>
+          </div>
+
+          <div class="form-row align-items-center mb-2">
+            <label class="form-label-left fw-bold mb-0">Machine</label>
+            <div class="form-input-right d-flex align-items-center gap-2">
+              <select name="machine_change" class="form-select form-select-sm w-auto fourm-select" data-target="machine">
+                <option value="">Select</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+              <input type="file" name="machine_change_pdf" accept=".pdf" class="form-control form-control-sm d-none fourm-file" id="machine-file" style="max-width:280px;">
+            </div>
+          </div>
+
+          <div class="form-row align-items-center mb-2">
+            <label class="form-label-left fw-bold mb-0">Method</label>
+            <div class="form-input-right d-flex align-items-center gap-2">
+              <select name="method_change" class="form-select form-select-sm w-auto fourm-select" data-target="method">
+                <option value="">Select</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+              <input type="file" name="method_change_pdf" accept=".pdf" class="form-control form-control-sm d-none fourm-file" id="method-file" style="max-width:280px;">
+            </div>
+          </div>
+
+          <div class="form-row align-items-center mb-2">
+            <label class="form-label-left fw-bold mb-0">Material</label>
+            <div class="form-input-right d-flex align-items-center gap-2">
+              <select name="material_change" class="form-select form-select-sm w-auto fourm-select" data-target="material">
+                <option value="">Select</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+              <input type="file" name="material_change_pdf" accept=".pdf" class="form-control form-control-sm d-none fourm-file" id="material-file" style="max-width:280px;">
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Main monthly report upload -->
+        <div class="mb-4">
+          <label for="mainReportFile" class="form-label fw-semibold">Monthly Report (PDF): <span class="text-danger">*</span></label>
+          <input type="file" name="main_pdf" class="form-control form-control-sm" id="mainReportFile" accept=".pdf" required>
+        </div>
+
+        <!-- Action Buttons: Save as Draft, Preview, Upload -->
+        <div class="d-flex justify-content-center gap-2 align-items-center">
+          <button type="submit" name="action" value="draft" id="saveDraftBtn" class="btn btn-outline-secondary rounded-pill px-4">Save as Draft</button>
+          
+          <div id="finalActionButtons" class="d-none gap-2">
+            <button type="button" id="previewBtn" class="btn btn-outline-navy rounded-pill px-4" onclick="previewPDF()">Preview</button>
+            <button type="submit" name="action" value="upload" class="btn btn-navy rounded-pill px-4">Upload</button>
+          </div>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Monthly Report Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <iframe id="pdfPreviewFrame" src="" style="width:100%; height:500px; border:none;" frameborder="0"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function previewPDF() {
+    const fileInput = document.getElementById('mainReportFile');
+    
+    // Check if a file is actually selected
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        
+        // Verify it's a PDF
+        if (file.type === "application/pdf") {
+            const fileURL = URL.createObjectURL(file);
+            window.open(fileURL, '_blank');
+        } else {
+            alert("Please select a valid PDF file to preview.");
+        }
+    } else {
+        alert("Please choose a PDF file first before clicking preview.");
+    }
+}
+</script>
+<script src="{{ url_for('static', path='js/upload.js') }}"></script>
+</body>
+</html>

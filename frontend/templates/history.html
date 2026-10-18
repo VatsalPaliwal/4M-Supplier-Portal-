@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiant — Supplier History</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="{{ url_for('static', path='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+{% set month_names = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+
+<!-- Shared Header (logged in state) -->
+<header class="radiant-header d-flex align-items-center justify-content-between">
+  <div class="d-flex align-items-center">
+    <img src="{{ url_for('static', path='images/radiant-logo.png') }}" alt="Radiant" class="radiant-logo-img">
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <a href="/supplier/upload" class="btn btn-danger rounded-pill btn-sm px-3">Upload 4M Form</a>
+    <a href="/supplier/history" class="btn btn-navy rounded-pill btn-sm px-3 active-nav-btn">History</a>
+    <a href="/supplier/change-password" class="logout-link ms-2">Change Password</a>
+    <form method="post" action="/logout" class="d-inline">
+      <button type="submit" class="logout-link border-0 bg-transparent p-0">Logout</button>
+    </form>
+  </div>
+</header>
+
+<div class="container my-4">
+
+  <h5 class="text-navy fw-bold mb-3">Submission History</h5>
+
+  <!-- Filter row with Status filter added -->
+  <div class="card card-panel shadow-sm mb-3">
+    <div class="card-body py-3">
+      <form class="row g-2 align-items-end" method="get" action="/supplier/history" id="historyFilterForm">
+        <div class="col-sm-4 col-md-3">
+          <label for="filterMonth" class="form-label mb-1">Month</label>
+          <select id="filterMonth" name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for m in months %}
+            <option value="{{ m }}" {% if request.query_params.get('month')|string == m|string %}selected{% endif %}>{{ month_names[m] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <label for="filterYear" class="form-label mb-1">Year</label>
+          <select id="filterYear" name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for y in years %}
+            <option value="{{ y }}" {% if request.query_params.get('year')|string == y|string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <!-- Status Filter -->
+        <div class="col-sm-4 col-md-3">
+          <label for="filterStatus" class="form-label mb-1">Status</label>
+          <select id="filterStatus" name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">All</option>
+            <option value="Approved" {% if request.query_params.get('status') == 'Approved' %}selected{% endif %}>Approved</option>
+            <option value="Pending" {% if request.query_params.get('status') == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Rejected" {% if request.query_params.get('status') == 'Rejected' %}selected{% endif %}>Rejected</option>
+          </select>
+        </div>
+        <div class="col-sm-12 col-md-3">
+          <noscript><button type="submit" class="btn btn-outline-navy btn-sm">Filter</button></noscript>
+          <a href="/supplier/history" class="btn btn-outline-secondary btn-sm">Clear Filters</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- History table -->
+  <div class="card card-panel shadow-sm">
+    {% if history %}
+    <div class="table-responsive scroll-table">
+      <table class="table table-dense table-bordered table-hover mb-0 align-middle">
+        <thead class="table-light sticky-thead">
+          <tr>
+            <th>Month</th>
+            <th>Year</th>
+            <th>Upload Date</th>
+            <th>Man</th>
+            <th>Machine</th>
+            <th>Method</th>
+            <th>Material</th>
+            <th>Status</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in history %}
+          <tr class="{% if row.status == 'pending' %}row-pending{% endif %}">
+            <td>{{ month_names[row.month] }}</td>
+            <td>{{ row.year }}</td>
+            <td>{{ row.upload_date.strftime('%d-%m-%Y') if row.upload_date else '—' }}</td>
+            <td>
+              {% if row.man_change %}<span class="flag-yes">Yes</span> <a href="/supplier/submission/{{ row.submission_id }}/attachment/Man%20Change" class="flag-download" title="Download Man change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+            </td>
+            <td>
+              {% if row.machine_change %}<span class="flag-yes">Yes</span> <a href="/supplier/submission/{{ row.submission_id }}/attachment/Machine%20Change" class="flag-download" title="Download Machine change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+            </td>
+            <td>
+              {% if row.method_change %}<span class="flag-yes">Yes</span> <a href="/supplier/submission/{{ row.submission_id }}/attachment/Submission/{{ row.submission_id }}/attachment/Method%20Change" class="flag-download" title="Download Method change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+            </td>
+            <td>
+              {% if row.material_change %}<span class="flag-yes">Yes</span> <a href="/supplier/submission/{{ row.submission_id }}/attachment/Material%20Change" class="flag-download" title="Download Material change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+            </td>
+            <!-- Status Badge Column -->
+            <td>
+              {% if row.status == 'Approved' %}
+                <span class="badge badge-status-approved">Approved</span>
+              {% elif row.status == 'Rejected' %}
+                <span class="badge badge-status-rejected">Rejected</span>
+              {% else %}
+                <span class="badge badge-status-pending">Pending</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if row.file_path %}<a href="/supplier/submission/{{ row.submission_id }}/download" class="text-navy">Download</a>{% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state text-center py-5">
+      <i class="bi bi-file-earmark-text"></i>
+      <p class="text-muted mb-0 mt-2">No submissions match your filters</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

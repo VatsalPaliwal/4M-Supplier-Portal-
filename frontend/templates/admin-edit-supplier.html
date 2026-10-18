@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiant — Edit Supplier</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="{{ url_for('static', path='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Admin Header -->
+<header class="admin-header d-flex align-items-center justify-content-between">
+  <div class="d-flex align-items-center">
+    <div class="admin-logo-wrap">
+      <img src="{{ url_for('static', path='images/radiant-logo.png') }}" alt="Radiant" class="radiant-logo-img">
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <span class="admin-header-name">{{ admin.email }}</span>
+    <span class="badge admin-badge">Admin</span>
+    <form method="post" action="/logout" class="d-inline">
+      <button type="submit" class="admin-logout-link border-0 bg-transparent p-0">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </form>
+  </div>
+</header>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      
+      <div class="mb-3">
+        <a href="/admin/dashboard" class="text-navy text-decoration-none small d-flex align-items-center gap-1">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+
+      <div class="card card-panel shadow-sm">
+        <div class="card-body p-4">
+          <h4 class="fw-bold mb-3 text-navy">Edit Supplier</h4>
+          
+          <form id="editSupplierForm" method="post" action="/admin/edit-supplier/{{ supplier.supplier_id }}">
+            <div class="mb-3">
+              <label for="supplier_name" class="form-label">Supplier Name</label>
+              <input type="text" class="form-control" id="supplier_name" name="supplier_name" value="{{ supplier.supplier_name }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="email" class="form-label">Email Address</label>
+              <input type="email" class="form-control" id="email" name="email" value="{{ supplier.email }}" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="authorized_person_name" class="form-label">Authorized Person</label>
+              <input type="text" class="form-control" id="authorized_person_name" name="authorized_person_name" value="{{ supplier.authorized_person_name }}" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="contact_no" class="form-label">Contact Number</label>
+              <input type="text" class="form-control" id="contact_no" name="contact_no" value="{{ supplier.contact_no }}" maxlength="10" inputmode="numeric" required>
+              <!-- Inline Error Message -->
+              <div class="text-danger small mt-1 d-none" id="contactError">Contact number must be exactly 10 digits.</div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+              <a href="/admin/dashboard" class="btn btn-outline-secondary rounded-pill w-50 py-2">Cancel</a>
+              <button type="submit" class="btn btn-navy rounded-pill w-50 py-2">Update Supplier</button>
+            </div>
+            </div>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  var editSupplierForm = document.getElementById('editSupplierForm');
+  var contactNoInput = document.getElementById('contact_no');
+  var contactError = document.getElementById('contactError');
+
+  // Real-time validation as the user types
+  contactNoInput.addEventListener('input', function () {
+    var contactVal = contactNoInput.value.trim();
+    
+    // If it becomes valid while typing, clear the error immediately
+    if (contactVal.length === 10 && !isNaN(contactVal)) {
+      contactError.classList.add('d-none');
+      contactNoInput.classList.remove('is-invalid');
+    }
+  });
+
+  // Final check when the form is submitted
+  editSupplierForm.addEventListener('submit', function (event) {
+    var contactVal = contactNoInput.value.trim();
+
+    // Check if it's not a number or not exactly 10 digits
+    if (contactVal.length !== 10 || isNaN(contactVal)) {
+      event.preventDefault(); // Stop form submission
+      contactError.classList.remove('d-none');
+      contactNoInput.classList.add('is-invalid');
+      contactNoInput.focus();
+    } else {
+      contactError.classList.add('d-none');
+      contactNoInput.classList.remove('is-invalid');
+    }
+  });
+</script>
+{% include 'session_modal.html' %}
+</body>
+</html>

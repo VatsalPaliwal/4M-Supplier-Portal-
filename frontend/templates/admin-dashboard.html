@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiant — Admin Dashboard</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="{{ url_for('static', path='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+{% set month_names = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+
+<!-- Admin Header -->
+<header class="admin-header d-flex align-items-center justify-content-between">
+  <div class="d-flex align-items-center">
+    <div class="admin-logo-wrap">
+      <img src="{{ url_for('static', path='images/radiant-logo.png') }}" alt="Radiant" class="radiant-logo-img">
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <span class="admin-header-name">{{ admin.email }}</span>
+    <span class="badge admin-badge">Admin</span>
+    <form method="post" action="/logout" class="d-inline">
+      <button type="submit" class="admin-logout-link border-0 bg-transparent p-0">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </form>
+  </div>
+</header>
+
+<div class="container-fluid admin-page px-4 py-4">
+
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0">Admin Dashboard</h4>
+      <p class="text-muted mb-0">Monitor all supplier submissions</p>
+    </div>
+    <div class="d-flex gap-2">
+      <!-- Upload Template Format Button triggers modal -->
+      <button type="button" class="btn btn-outline-navy btn-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#uploadTemplateModal">
+        <i class="bi bi-file-earmark-arrow-up"></i> Upload Format
+      </button>
+      <a href="/admin/export-excel" class="btn btn-navy btn-sm d-flex align-items-center gap-2">
+        <i class="bi bi-file-earmark-spreadsheet"></i> Export to Excel
+      </a>
+      <a href="/admin/create-supplier" class="btn btn-accent btn-sm d-flex align-items-center gap-2">
+        <i class="bi bi-person-plus"></i> Add Supplier
+      </a>
+    </div>
+  </div>
+
+  <!-- Manage Suppliers -->
+  <div class="card card-panel shadow-sm mb-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-building"></i> Manage Suppliers
+        </h6>
+        <span class="badge registered-badge">{{ suppliers|length }} registered</span>
+      </div>
+
+      <div class="mb-3">
+        <input type="text" id="supplierSearch" class="form-control form-control-sm" placeholder="Search suppliers by name, email, or authorized person name...">
+      </div>
+
+      <div class="scroll-list" id="supplierListWrap">
+        {% for s in suppliers %}
+        <div class="supplier-row d-flex align-items-center justify-content-between" data-search="{{ s.supplier_name|lower }} {{ s.email|lower }} {{ s.authorized_person_name|lower }} {{ s.contact_no|lower }}">
+          <div class="d-flex align-items-center gap-3">
+            <div class="supplier-avatar">{{ s.supplier_name[0]|upper }}</div>
+            <div>
+              <div class="fw-semibold">{{ s.supplier_name }}</div>
+            <span class="text-muted small">{{ s.authorized_person_name }}</span>
+              <div class="text-muted small">{{ s.email }}</div>
+              <div class="text-muted small"><i class="bi bi-telephone-fill me-1"></i>{{ s.contact_no }}</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <a href="/admin/edit-supplier/{{ s.supplier_id }}" class="edit-link">
+              <i class="bi bi-pencil"></i> Edit
+            </a>
+            {% if s.users %}
+            <a href="/admin/reset-password/{{ s.users[0].id }}" class="reset-link">
+              <i class="bi bi-key"></i> Reset Password
+            </a>
+            {% endif %}
+            <a href="#" class="remove-link" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-supplier-name="{{ s.supplier_name }}" data-supplier-id="{{ s.supplier_id }}">
+              <i class="bi bi-trash"></i> Remove
+            </a>
+          </div>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0 py-2">No suppliers registered yet.</p>
+        {% endfor %}
+        <p class="text-muted mb-0 py-2 d-none" id="noSupplierResults">No suppliers match your search.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter row -->
+  <form method="get" action="/admin/dashboard" id="filterForm" class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+    <select name="supplier" class="form-select form-select-sm filter-pill w-auto" onchange="this.form.submit()">
+      <option value="All">All Suppliers</option>
+      {% for s in suppliers %}
+      <option value="{{ s.supplier_id }}" {% if selected_supplier == s.supplier_id|string %}selected{% endif %}>{{ s.supplier_name }}</option>
+      {% endfor %}
+    </select>
+    <select name="month" class="form-select form-select-sm filter-pill w-auto" onchange="this.form.submit()">
+      <option value="All">All Months</option>
+      {% for m in months %}
+      <option value="{{ m }}" {% if selected_month == m|string %}selected{% endif %}>{{ month_names[m] }}</option>
+      {% endfor %}
+    </select>
+    <select name="year" class="form-select form-select-sm filter-pill w-auto" onchange="this.form.submit()">
+      <option value="All">All Years</option>
+      {% for y in years %}
+      <option value="{{ y }}" {% if selected_year == y|string %}selected{% endif %}>{{ y }}</option>
+      {% endfor %}
+    </select>
+    <!-- Approval Status Filter -->
+    <select name="status" class="form-select form-select-sm filter-pill w-auto" onchange="this.form.submit()">
+      <option value="All">All Statuses</option>
+      <option value="Approved" {% if selected_status == 'Approved' %}selected{% endif %}>Approved</option>
+      <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+      <option value="Rejected" {% if selected_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+    </select>
+    
+    <noscript><button type="submit" class="btn btn-outline-navy btn-sm">Filter</button></noscript>
+    <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm">Clear Filters</a>
+  </form>
+
+  <!-- Submissions panel -->
+  <div class="card card-panel shadow-sm">
+    <div class="card-body">
+      {% if submissions %}
+      <div class="table-responsive scroll-table">
+        <table class="table table-dense table-bordered mb-0 align-middle">
+          <thead class="table-light sticky-thead">
+            <tr>
+              <th>Supplier Name</th>
+              <th>Month</th>
+              <th>Year</th>
+              <th>Upload Date</th>
+              <th>Man</th>
+              <th>Machine</th>
+              <th>Method</th>
+              <th>Material</th>
+              <th>Status</th>
+              <th>Download</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in submissions %}
+            <tr class="{% if sub.status and sub.status.lower() == 'pending' %}row-pending{% endif %}">
+              <td>{{ sub.supplier.supplier_name }}</td>
+              <td>{{ month_names[sub.month] }}</td>
+              <td>{{ sub.year }}</td>
+              <td>{{ sub.upload_date.strftime('%d-%m-%Y') if sub.upload_date else '—' }}</td>
+              <td>
+                {% if sub.man_change %}<span class="flag-yes">Yes</span> <a href="/admin/submission/{{ sub.submission_id }}/attachment/Man%20Change" class="flag-download" title="Download Man change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+              </td>
+              <td>
+                {% if sub.machine_change %}<span class="flag-yes">Yes</span> <a href="/admin/submission/{{ sub.submission_id }}/attachment/Machine%20Change" class="flag-download" title="Download Machine change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+              </td>
+              <td>
+                {% if sub.method_change %}<span class="flag-yes">Yes</span> <a href="/admin/submission/{{ sub.submission_id }}/attachment/Method%20Change" class="flag-download" title="Download Method change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+              </td>
+              <td>
+                {% if sub.material_change %}<span class="flag-yes">Yes</span> <a href="/admin/submission/{{ sub.submission_id }}/attachment/Material%20Change" class="flag-download" title="Download Material change attachment">&#8595;</a>{% else %}<span class="flag-no">No</span>{% endif %}
+              </td>
+              
+              <!-- Status Badge Column -->
+              <td>
+                {% if sub.status and sub.status.lower() == 'approved' %}
+                  <span class="badge badge-status-approved">Approved</span>
+                {% elif sub.status and sub.status.lower() == 'rejected' %}
+                  <span class="badge badge-status-rejected">Rejected</span>
+                {% else %}
+                  <span class="badge badge-status-pending">Pending</span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if sub.file_path %}<a href="/admin/submission/{{ sub.submission_id }}/download" class="text-navy">Download</a>{% else %}<span class="text-muted">—</span>{% endif %}
+              </td>
+              
+              <!-- State-Aware Actions Column -->
+              <td>
+                <div class="d-flex gap-1 justify-content-center">
+                  {% if sub.status and sub.status.lower() == 'rejected' %}
+                    <form method="post" action="/admin/submission/{{ sub.submission_id }}/approve" class="m-0">
+                      <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2" title="Approve Submission">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    </form>
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" disabled title="Already Rejected">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+
+                  {% elif sub.status and sub.status.lower() == 'approved' %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" disabled title="Already Approved">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                    <form method="post" action="/admin/submission/{{ sub.submission_id }}/reject" class="m-0">
+                      <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" title="Reject Submission">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </form>
+
+                  {% else %}
+                    <form method="post" action="/admin/submission/{{ sub.submission_id }}/approve" class="m-0">
+                      <button type="submit" class="btn btn-outline-success btn-sm py-0 px-2" title="Approve">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    </form>
+                    <form method="post" action="/admin/submission/{{ sub.submission_id }}/reject" class="m-0">
+                      <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" title="Reject">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state text-center py-5">
+        <i class="bi bi-file-earmark-text"></i>
+        <p class="text-muted mb-0 mt-2">No submissions match your filters</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Upload Template Modal -->
+<div class="modal fade" id="uploadTemplateModal" tabindex="-1" aria-labelledby="uploadTemplateModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="/admin/upload-template" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadTemplateModalLabel">Upload Reference Format Template</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">Upload the master reference file (Excel) that suppliers will download as a template guide.</p>
+          <div class="mb-3">
+            <label for="templateFile" class="form-label fw-semibold">Select Template File (.xlsx, .xls):</label>
+            <input type="file" name="template_file" class="form-control form-control-sm" id="templateFile" accept=".xlsx,.xls" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-navy btn-sm">Upload Template</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" id="deleteSupplierForm" action="">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmDeleteModalLabel">Remove Supplier</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete <strong id="confirmDeleteName">this supplier</strong>? This action cannot be undone.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-sm">Delete Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.querySelectorAll('.remove-link').forEach(function (link) {
+    link.addEventListener('click', function () {
+      var name = this.getAttribute('data-supplier-name');
+      var id = this.getAttribute('data-supplier-id');
+      document.getElementById('confirmDeleteName').textContent = name;
+      document.getElementById('deleteSupplierForm').setAttribute('action', '/admin/delete-supplier/' + id);
+    });
+  });
+
+  var supplierSearchInput = document.getElementById('supplierSearch');
+  var supplierRows = document.querySelectorAll('#supplierListWrap .supplier-row');
+  var noResultsMsg = document.getElementById('noSupplierResults');
+
+  if (supplierSearchInput) {
+    supplierSearchInput.addEventListener('input', function () {
+      var query = this.value.trim().toLowerCase();
+      var visibleCount = 0;
+
+      supplierRows.forEach(function (row) {
+        var haystack = row.getAttribute('data-search') || '';
+        var matches = haystack.indexOf(query) !== -1;
+        row.classList.toggle('d-none', !matches);
+        if (matches) visibleCount++;
+      });
+
+      if (noResultsMsg) {
+        noResultsMsg.classList.toggle('d-none', visibleCount !== 0 || supplierRows.length === 0);
+      }
+    });
+  }
+</script>
+{% include 'session_modal.html' %}
+</body>
+</html>

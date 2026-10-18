@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiant — Login</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="{{ url_for('static', path='css/style.css') }}" rel="stylesheet">
+<style>
+  body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8fafc;
+  }
+  .login-container {
+    min-height: calc(100vh - 73px);
+  }
+  .brand-side {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: white;
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .login-card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 440px;
+    background-color: white;
+  }
+  .radiant-header {
+    padding: 1rem 2rem;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .radiant-logo-img {
+    max-height: 40px;
+  }
+  .btn-navy {
+    background-color: #0f172a;
+    color: white;
+    transition: background-color 0.2s;
+  }
+  .btn-navy:hover {
+    background-color: #1e293b;
+    color: white;
+  }
+  .text-navy {
+    color: #0f172a !important;
+  }
+  .form-control {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  .form-control:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+  }
+</style>
+</head>
+<body>
+
+<!-- Shared Header -->
+<header class="radiant-header d-flex align-items-center justify-content-between">
+  <div class="d-flex align-items-center">
+    <img src="{{ url_for('static', path='images/radiant-logo.png') }}" alt="Radiant" class="radiant-logo-img">
+  </div>
+  <div></div>
+</header>
+
+<div class="container-fluid login-container p-0">
+  <div class="row g-0 h-100">
+    
+    <!-- Left Side: Professional Enterprise Branding Panel -->
+    <div class="col-lg-7 d-none d-lg-flex brand-side">
+      <div>
+        <h1 class="display-5 fw-bold mb-3 text-white">4M Change Management</h1>
+        <p class="text-light opacity-75 lead fs-6">Submit and track supplier 4M change requests.</p>
+      </div>
+      <div class="text-light opacity-50 small">
+        &copy; 2026 Radiant. All rights reserved.
+      </div>
+    </div>
+
+    <!-- Right Side: Login & OTP Form Panel -->
+    <div class="col-lg-5 d-flex align-items-center justify-content-center bg-light px-4 py-5">
+      <div class="card login-card shadow-sm">
+        <div class="card-body p-4">
+
+          <!-- ===== Login Form Section ===== -->
+          <div id="loginFormSection">
+            <h5 class="card-title text-navy fw-bold text-center mb-4">4M Change Management</h5>
+
+            <form method="post" action="/login" id="loginForm">
+              <div class="mb-3">
+                <label for="email" class="form-label text-secondary small fw-semibold">Username / Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label text-secondary small fw-semibold">Password</label>
+                <div class="input-group">
+                  <input type="password" class="form-control rounded-start-pill" id="password" name="password" required>
+                  <button type="button" class="btn btn-outline-secondary rounded-end-pill px-3" id="togglePassword" tabindex="-1" aria-label="Show password">
+                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div id="loginError" class="alert alert-danger py-2 small {% if not error %}d-none{% endif %}" role="alert">
+                {{ error }}
+              </div>
+
+              <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-navy rounded-pill py-2" id="loginSubmitBtn">Login</button>
+              </div>
+
+              <div class="text-center mt-3">
+                <a href="/forgot-password" class="small text-navy text-decoration-none">Forgot Password?</a>
+              </div>
+            </form>
+          </div>
+
+          <!-- ===== Admin Verification (OTP) Section ===== -->
+          <div id="otpSection" class="d-none">
+            <h5 class="card-title text-navy fw-bold text-center mb-2">Admin Verification</h5>
+            <p class="text-muted small text-center mb-4">An OTP has been sent to your registered email.</p>
+
+            <div class="mb-3">
+              <label for="otpInput" class="form-label text-secondary small fw-semibold">Enter OTP</label>
+              <input type="text" class="form-control text-center fs-5 tracking-widest" id="otpInput" inputmode="numeric" autocomplete="one-time-code">
+            </div>
+
+            <div id="otpError" class="alert alert-danger py-2 small d-none" role="alert"></div>
+
+            <div class="d-grid mt-4">
+              <button type="button" class="btn btn-navy rounded-pill py-2" id="verifyOtpBtn">Verify OTP</button>
+            </div>
+            <div class="d-flex justify-content-between mt-3">
+              <button type="button" class="btn btn-link btn-sm text-navy p-0 text-decoration-none" id="backToLoginBtn">Back</button>
+              <button type="button" class="btn btn-link btn-sm text-navy p-0 text-decoration-none" id="resendOtpBtn">Resend OTP</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  var togglePasswordBtn = document.getElementById('togglePassword');
+  var passwordInput = document.getElementById('password');
+  var togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', function () {
+      var isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      togglePasswordIcon.classList.toggle('bi-eye', !isHidden);
+      togglePasswordIcon.classList.toggle('bi-eye-slash', isHidden);
+      togglePasswordBtn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+    });
+  }
+
+  // ===== Admin 2FA flow =====
+  var loginForm = document.getElementById('loginForm');
+  var loginFormSection = document.getElementById('loginFormSection');
+  var otpSection = document.getElementById('otpSection');
+  var loginError = document.getElementById('loginError');
+  var otpError = document.getElementById('otpError');
+  var otpInput = document.getElementById('otpInput');
+  var emailInput = document.getElementById('email');
+  var loginSubmitBtn = document.getElementById('loginSubmitBtn');
+
+  function showLoginError(message) {
+    loginError.textContent = message;
+    loginError.classList.remove('d-none');
+  }
+
+  function hideLoginError() {
+    loginError.classList.add('d-none');
+    loginError.textContent = '';
+  }
+
+  function showOtpError(message) {
+    otpError.textContent = message;
+    otpError.classList.remove('d-none', 'alert-success');
+    otpError.classList.add('alert-danger');
+  }
+
+  function hideOtpError() {
+    otpError.classList.add('d-none');
+    otpError.textContent = '';
+  }
+
+  function showOtpSection() {
+    loginFormSection.classList.add('d-none');
+    otpSection.classList.remove('d-none');
+    hideOtpError();
+    otpInput.value = '';
+    otpInput.focus();
+  }
+
+  function showLoginFormSection() {
+    otpSection.classList.add('d-none');
+    loginFormSection.classList.remove('d-none');
+  }
+
+  function extractErrorFromHtml(html) {
+    try {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var alertEl = doc.querySelector('.alert-danger');
+      return alertEl ? alertEl.textContent.trim() : 'Login failed. Please try again.';
+    } catch (e) {
+      return 'Login failed. Please try again.';
+    }
+  }
+
+  function submitLogin(email, password) {
+    var body = new URLSearchParams();
+    body.append('email', email);
+    body.append('password', password);
+
+    return fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: body
+    });
+  }
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      hideLoginError();
+      loginSubmitBtn.disabled = true;
+
+      var email = emailInput.value;
+      var password = passwordInput.value;
+
+      submitLogin(email, password)
+        .then(function (response) {
+          if (response.redirected) {
+            window.location.href = response.url;
+            return null;
+          }
+
+          var contentType = response.headers.get('content-type') || '';
+          if (contentType.indexOf('application/json') !== -1) {
+            return response.json().then(function (data) {
+              if (data.requires_2fa) {
+                showOtpSection();
+              } else if (data.error || data.detail) {
+                showLoginError(data.error || data.detail);
+              } else {
+                showLoginError('Login failed. Please try again.');
+              }
+              return null;
+            });
+          }
+
+          return response.text().then(function (html) {
+            showLoginError(extractErrorFromHtml(html));
+          });
+        })
+        .catch(function () {
+          showLoginError('Something went wrong. Please try again.');
+        })
+        .finally(function () {
+          loginSubmitBtn.disabled = false;
+        });
+    });
+  }
+
+  var verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  if (verifyOtpBtn) {
+    verifyOtpBtn.addEventListener('click', function () {
+      hideOtpError();
+      var otp = otpInput.value.trim();
+      if (!otp) {
+        showOtpError('Please enter the OTP.');
+        return;
+      }
+
+      verifyOtpBtn.disabled = true;
+
+      fetch('/verify-admin-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ email: emailInput.value, otp: otp })
+      })
+        .then(function (response) {
+          if (response.redirected) {
+            window.location.href = response.url;
+            return null;
+          }
+          return response.json().then(function (data) {
+            if (data.detail) {
+              showOtpError(data.detail);
+            } else {
+              window.location.href = '/admin/dashboard';
+            }
+          });
+        })
+        .catch(function () {
+          showOtpError('Something went wrong. Please try again.');
+        })
+        .finally(function () {
+          verifyOtpBtn.disabled = false;
+        });
+    });
+  }
+
+  var resendOtpBtn = document.getElementById('resendOtpBtn');
+  if (resendOtpBtn) {
+    resendOtpBtn.addEventListener('click', function () {
+      hideOtpError();
+      resendOtpBtn.disabled = true;
+
+      submitLogin(emailInput.value, passwordInput.value)
+        .then(function (response) {
+          var contentType = response.headers.get('content-type') || '';
+          if (contentType.indexOf('application/json') !== -1) {
+            return response.json().then(function (data) {
+              if (data.requires_2fa) {
+                otpInput.value = '';
+                otpError.textContent = 'A new OTP has been sent.';
+                otpError.classList.remove('d-none', 'alert-danger');
+                otpError.classList.add('alert-success');
+              }
+            });
+          }
+        })
+        .catch(function () {
+          showOtpError('Could not resend OTP. Please try again.');
+        })
+        .finally(function () {
+          resendOtpBtn.disabled = false;
+        });
+    });
+  }
+
+  var backToLoginBtn = document.getElementById('backToLoginBtn');
+  if (backToLoginBtn) {
+    backToLoginBtn.addEventListener('click', function () {
+      showLoginFormSection();
+    });
+  }
+</script>
+</body>
+</html>

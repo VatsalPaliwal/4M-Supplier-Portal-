@@ -1,0 +1,20 @@
+import urllib.request
+from io import StringIO
+import pandas as pd
+
+def print_letter(doc_url: str):
+    html = urllib.request.urlopen(doc_url).read().decode("utf-8")
+    df = pd.read_html(StringIO(html))[0]
+    df.columns = ["x", "char", "y"]
+    df = df[pd.to_numeric(df["x"], errors="coerce").notna()].copy()
+    df["x"] = df["x"].astype(int)
+    df["y"] = df["y"].astype(int)
+    points = dict(zip(zip(df["x"], df["y"]), df["char"]))
+    max_x, max_y = df["x"].max(), df["y"].max()
+    for y in range(max_y, -1, -1):
+        print("".join(points.get((x, y), " ") for x in range(max_x + 1)))
+
+if __name__ == "__main__":
+    print_letter(
+        " https://docs.google.com/document/d/e/2PACX-1vSvM5gDlNvt7npYHhp_XfsJvuntUhq184By5xO_pA4b_gCWeXb6dM6ZxwN8rE6S4ghUsCj2VKR21oEP/pub"
+    )

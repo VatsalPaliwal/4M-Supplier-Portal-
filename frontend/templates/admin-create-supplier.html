@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radiant — Create Supplier</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="{{ url_for('static', path='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Shared Header (logged in state) -->
+<header class="radiant-header d-flex align-items-center justify-content-between">
+  <div class="d-flex align-items-center">
+    <img src="{{ url_for('static', path='images/radiant-logo.png') }}" alt="Radiant" class="radiant-logo-img">
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <a href="/admin/dashboard" class="btn btn-navy rounded-pill btn-sm px-3">Dashboard</a>
+    <form method="post" action="/logout" class="d-inline">
+      <button type="submit" class="logout-link border-0 bg-transparent p-0">Logout</button>
+    </form>
+  </div>
+</header>
+
+<div class="container my-4">
+
+  <a href="/admin/dashboard" class="back-link mb-3 d-inline-flex align-items-center gap-1">
+    <i class="bi bi-arrow-left"></i> Back to Admin Dashboard
+  </a>
+
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+
+      <h5 class="text-navy fw-bold mb-3">Create Supplier Account</h5>
+
+      <div class="card card-panel shadow-sm">
+        <div class="card-body p-4">
+          <form method="post" action="/admin/create-supplier">
+            
+            <div class="mb-3">
+              <label for="company_name" class="form-label">Supplier Name</label>
+              <input type="text" class="form-control" id="company_name" name="company_name" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="email" class="form-label">Authorized Person Email</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="auth_name" class="form-label">Authorized Person Name</label>
+              <input type="text" class="form-control" id="auth_name" name="auth_name" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="contact_no" class="form-label">Contact No</label>
+              <input type="tel" class="form-control" id="contact_no" name="contact_no"
+                     inputmode="numeric" pattern="[0-9]{10}" maxlength="10"
+                     title="Enter exactly 10 digits" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-danger py-2 small" role="alert">
+              {{ error }}
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-2 mt-4">
+              <a href="/admin/dashboard" class="btn btn-outline-secondary rounded-pill flex-fill">Cancel</a>
+              <button type="submit" class="btn btn-navy rounded-pill flex-fill">Create Account</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% include 'session_modal.html' %}
+</body>
+</html>
